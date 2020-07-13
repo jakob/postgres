@@ -255,8 +255,7 @@ PLy_result_str(PyObject *arg)
 	PLyResultObject *ob = (PLyResultObject *) arg;
 
 #if PY_MAJOR_VERSION >= 3
-	return PyUnicode_FromFormat("<%s status=%S nrows=%S rows=%S>",
-								Py_TYPE(ob)->tp_name,
+	return PyUnicode_FromFormat("<PLyResult status=%S nrows=%S rows=%S>",
 								ob->status,
 								ob->nrows,
 								ob->rows);
