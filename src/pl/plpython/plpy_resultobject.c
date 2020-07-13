@@ -153,7 +153,7 @@ PLy_result_colnames(PyObject *self, PyObject *unused)
 	{
 		Form_pg_attribute attr = TupleDescAttr(ob->tupdesc, i);
 
-		PyList_SET_ITEM(list, i, PyString_FromString(NameStr(attr->attname)));
+		PyList_SetItem(list, i, PyString_FromString(NameStr(attr->attname)));
 	}
 
 	return list;
@@ -179,7 +179,7 @@ PLy_result_coltypes(PyObject *self, PyObject *unused)
 	{
 		Form_pg_attribute attr = TupleDescAttr(ob->tupdesc, i);
 
-		PyList_SET_ITEM(list, i, PyInt_FromLong(attr->atttypid));
+		PyList_SetItem(list, i, PyInt_FromLong(attr->atttypid));
 	}
 
 	return list;
@@ -205,7 +205,7 @@ PLy_result_coltypmods(PyObject *self, PyObject *unused)
 	{
 		Form_pg_attribute attr = TupleDescAttr(ob->tupdesc, i);
 
-		PyList_SET_ITEM(list, i, PyInt_FromLong(attr->atttypmod));
+		PyList_SetItem(list, i, PyInt_FromLong(attr->atttypmod));
 	}
 
 	return list;
