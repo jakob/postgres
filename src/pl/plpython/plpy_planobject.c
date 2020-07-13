@@ -101,7 +101,7 @@ PLy_plan_dealloc(PyObject *arg)
 		MemoryContextDelete(ob->mcxt);
 		ob->mcxt = NULL;
 	}
-	arg->ob_type->tp_free(arg);
+	PyObject_Del(arg);
 }
 
 

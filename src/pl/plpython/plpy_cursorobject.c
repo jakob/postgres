@@ -325,7 +325,7 @@ PLy_cursor_dealloc(PyObject *arg)
 		MemoryContextDelete(cursor->mcxt);
 		cursor->mcxt = NULL;
 	}
-	arg->ob_type->tp_free(arg);
+	PyObject_Del(arg);
 }
 
 static PyObject *

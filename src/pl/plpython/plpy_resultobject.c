@@ -130,7 +130,7 @@ PLy_result_dealloc(PyObject *arg)
 		ob->tupdesc = NULL;
 	}
 
-	arg->ob_type->tp_free(arg);
+	PyObject_Del(arg);
 }
 
 static PyObject *
