@@ -31,21 +31,39 @@ static PyMethodDef PLy_subtransaction_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-static PyTypeObject PLy_SubtransactionType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	.tp_name = "PLySubtransaction",
-	.tp_basicsize = sizeof(PLySubtransactionObject),
-	.tp_dealloc = PLy_subtransaction_dealloc,
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	.tp_doc = PLy_subtransaction_doc,
-	.tp_methods = PLy_subtransaction_methods,
-};
+static void * PLy_SubtransactionType;
 
 
 void
 PLy_subtransaction_init_type(void)
 {
-	if (PyType_Ready(&PLy_SubtransactionType) < 0)
+	PyType_Slot slots[] = {
+		{
+			.slot = Py_tp_dealloc,
+			.pfunc = PLy_subtransaction_dealloc
+		},
+		{
+			.slot = Py_tp_doc,
+			.pfunc = PLy_subtransaction_doc
+		},
+		{
+			.slot = Py_tp_methods,
+			.pfunc = PLy_subtransaction_methods
+		},
+		{
+			.slot = 0,
+			.pfunc = NULL
+		}
+	};
+	PyType_Spec spec = {
+		.name = "PLySubtransaction",
+		.basicsize = sizeof(PLySubtransactionObject),
+		.itemsize = 0,
+		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+		.slots = slots
+	};
+	PLy_SubtransactionType = PyType_FromSpec(&spec);
+	if (PLy_SubtransactionType == NULL)
 		elog(ERROR, "could not initialize PLy_SubtransactionType");
 }
 
@@ -55,7 +73,7 @@ PLy_subtransaction_new(PyObject *self, PyObject *unused)
 {
 	PLySubtransactionObject *ob;
 
-	ob = PyObject_New(PLySubtransactionObject, &PLy_SubtransactionType);
+	ob = PyObject_New(PLySubtransactionObject, PLy_SubtransactionType);
 
 	if (ob == NULL)
 		return NULL;

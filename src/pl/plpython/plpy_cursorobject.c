@@ -35,22 +35,46 @@ static PyMethodDef PLy_cursor_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-static PyTypeObject PLy_CursorType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	.tp_name = "PLyCursor",
-	.tp_basicsize = sizeof(PLyCursorObject),
-	.tp_dealloc = PLy_cursor_dealloc,
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER,
-	.tp_doc = PLy_cursor_doc,
-	.tp_iter = PyObject_SelfIter,
-	.tp_iternext = PLy_cursor_iternext,
-	.tp_methods = PLy_cursor_methods,
-};
+static void *PLy_CursorType;
 
 void
 PLy_cursor_init_type(void)
 {
-	if (PyType_Ready(&PLy_CursorType) < 0)
+	PyType_Slot slots[] = {
+		{
+			.slot = Py_tp_dealloc,
+			.pfunc = PLy_cursor_dealloc
+		},
+		{
+			.slot = Py_tp_doc,
+			.pfunc = PLy_cursor_doc
+		},
+		{
+			.slot = Py_tp_iter,
+			.pfunc = PyObject_SelfIter
+		},
+		{
+			.slot = Py_tp_iternext,
+			.pfunc = PLy_cursor_iternext
+		},
+		{
+			.slot = Py_tp_methods,
+			.pfunc = PLy_cursor_methods
+		},
+		{
+			.slot = 0,
+			.pfunc = NULL
+		}
+	};
+	PyType_Spec spec = {
+		.name = "PLyCursor",
+		.basicsize = sizeof(PLyCursorObject),
+		.itemsize = 0,
+		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_ITER,
+		.slots = slots
+	};
+	PLy_CursorType = PyType_FromSpec(&spec);
+	if (PLy_CursorType == NULL)
 		elog(ERROR, "could not initialize PLy_CursorType");
 }
 
@@ -82,7 +106,7 @@ PLy_cursor_query(const char *query)
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
 
-	if ((cursor = PyObject_New(PLyCursorObject, &PLy_CursorType)) == NULL)
+	if ((cursor = PyObject_New(PLyCursorObject, PLy_CursorType)) == NULL)
 		return NULL;
 	cursor->portalname = NULL;
 	cursor->closed = false;
@@ -180,7 +204,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		return NULL;
 	}
 
-	if ((cursor = PyObject_New(PLyCursorObject, &PLy_CursorType)) == NULL)
+	if ((cursor = PyObject_New(PLyCursorObject, PLy_CursorType)) == NULL)
 		return NULL;
 	cursor->portalname = NULL;
 	cursor->closed = false;

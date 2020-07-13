@@ -27,20 +27,38 @@ static PyMethodDef PLy_plan_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-static PyTypeObject PLy_PlanType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	.tp_name = "PLyPlan",
-	.tp_basicsize = sizeof(PLyPlanObject),
-	.tp_dealloc = PLy_plan_dealloc,
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	.tp_doc = PLy_plan_doc,
-	.tp_methods = PLy_plan_methods,
-};
+static void *PLy_PlanType;
 
 void
 PLy_plan_init_type(void)
 {
-	if (PyType_Ready(&PLy_PlanType) < 0)
+	PyType_Slot slots[] = {
+		{
+			.slot = Py_tp_dealloc,
+			.pfunc = PLy_plan_dealloc
+		},
+		{
+			.slot = Py_tp_doc,
+			.pfunc = PLy_plan_doc
+		},
+		{
+			.slot = Py_tp_methods,
+			.pfunc = PLy_plan_methods
+		},
+		{
+			.slot = 0,
+			.pfunc = NULL
+		}
+	};
+	PyType_Spec spec = {
+		.name = "PLyPlan",
+		.basicsize = sizeof(PLyPlanObject),
+		.itemsize = 0,
+		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+		.slots = slots
+	};
+	PLy_PlanType = PyType_FromSpec(&spec);
+	if (PLy_PlanType == NULL)
 		elog(ERROR, "could not initialize PLy_PlanType");
 }
 
@@ -49,7 +67,7 @@ PLy_plan_new(void)
 {
 	PLyPlanObject *ob;
 
-	if ((ob = PyObject_New(PLyPlanObject, &PLy_PlanType)) == NULL)
+	if ((ob = PyObject_New(PLyPlanObject, PLy_PlanType)) == NULL)
 		return NULL;
 
 	ob->plan = NULL;
@@ -65,7 +83,7 @@ PLy_plan_new(void)
 bool
 is_PLyPlanObject(PyObject *ob)
 {
-	return ob->ob_type == &PLy_PlanType;
+	return ob->ob_type == PLy_PlanType;
 }
 
 static void

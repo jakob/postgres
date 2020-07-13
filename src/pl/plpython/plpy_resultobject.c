@@ -24,17 +24,6 @@ static int	PLy_result_ass_subscript(PyObject *self, PyObject *item, PyObject *va
 
 static char PLy_result_doc[] = "Results of a PostgreSQL query";
 
-static PySequenceMethods PLy_result_as_sequence = {
-	.sq_length = PLy_result_length,
-	.sq_item = PLy_result_item,
-};
-
-static PyMappingMethods PLy_result_as_mapping = {
-	.mp_length = PLy_result_length,
-	.mp_subscript = PLy_result_subscript,
-	.mp_ass_subscript = PLy_result_ass_subscript,
-};
-
 static PyMethodDef PLy_result_methods[] = {
 	{"colnames", PLy_result_colnames, METH_NOARGS, NULL},
 	{"coltypes", PLy_result_coltypes, METH_NOARGS, NULL},
@@ -44,23 +33,62 @@ static PyMethodDef PLy_result_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-static PyTypeObject PLy_ResultType = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	.tp_name = "PLyResult",
-	.tp_basicsize = sizeof(PLyResultObject),
-	.tp_dealloc = PLy_result_dealloc,
-	.tp_as_sequence = &PLy_result_as_sequence,
-	.tp_as_mapping = &PLy_result_as_mapping,
-	.tp_str = &PLy_result_str,
-	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	.tp_doc = PLy_result_doc,
-	.tp_methods = PLy_result_methods,
-};
+static void * PLy_ResultType;
 
 void
 PLy_result_init_type(void)
 {
-	if (PyType_Ready(&PLy_ResultType) < 0)
+	PyType_Slot slots[] = {
+		{
+			.slot = Py_tp_dealloc,
+			.pfunc = PLy_result_dealloc
+		},
+		{
+			.slot = Py_tp_doc,
+			.pfunc = PLy_result_doc
+		},
+		{
+			.slot = Py_tp_methods,
+			.pfunc = PLy_result_methods
+		},
+		{
+			.slot = Py_tp_str,
+			.pfunc = &PLy_result_str
+		},
+		{ 
+			.slot = Py_sq_length,
+			.pfunc = PLy_result_length
+		},
+		{ 
+			.slot = Py_sq_item,
+			.pfunc = PLy_result_item
+		},
+		{ 
+			.slot = Py_mp_length,
+			.pfunc = PLy_result_length
+		},
+		{ 
+			.slot = Py_mp_subscript,
+			.pfunc = PLy_result_subscript
+		},
+		{ 
+			.slot = Py_mp_ass_subscript,
+			.pfunc = PLy_result_ass_subscript
+		},
+		{
+			.slot = 0,
+			.pfunc = NULL
+		}
+	};
+	PyType_Spec spec = {
+		.name = "PLyResult",
+		.basicsize = sizeof(PLyResultObject),
+		.itemsize = 0,
+		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+		.slots = slots
+	};
+	PLy_ResultType = PyType_FromSpec(&spec);
+	if (PLy_ResultType == NULL)
 		elog(ERROR, "could not initialize PLy_ResultType");
 }
 
@@ -69,7 +97,7 @@ PLy_result_new(void)
 {
 	PLyResultObject *ob;
 
-	if ((ob = PyObject_New(PLyResultObject, &PLy_ResultType)) == NULL)
+	if ((ob = PyObject_New(PLyResultObject, PLy_ResultType)) == NULL)
 		return NULL;
 
 	/* ob->tuples = NULL; */
